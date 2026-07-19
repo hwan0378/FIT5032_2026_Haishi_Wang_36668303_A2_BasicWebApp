@@ -36,7 +36,7 @@ const router = createRouter({
 
 // Navigation Guards
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = false
+  const isAuthenticated = true
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'home' }) // 如果页面需要权限且未登录，重定向回首页或登录页
