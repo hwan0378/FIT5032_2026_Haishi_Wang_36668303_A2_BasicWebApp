@@ -1,6 +1,19 @@
 <template>
   <div class="container mt-4">
-    <div class="row">
+    <!-- 拦截：用户没登录，或者角色不是 Coordinator -->
+    <div
+      v-if="currentUser === null || currentUser.role !== 'Coordinator'"
+      class="alert alert-danger text-center p-5 mt-5 shadow-sm"
+    >
+      <h3 class="fw-bold">Access Denied</h3>
+      <p class="fs-5">
+        You must be logged in as a <strong>Charity Coordinator</strong> to view this dashboard.
+      </p>
+      <router-link to="/" class="btn btn-primary mt-3">Return to Home</router-link>
+    </div>
+
+    <!-- Coordinator，正常显示后台界面 -->
+    <div v-else class="row">
       <div class="col-12">
         <div class="card shadow-sm border-0">
           <div class="card-body">
@@ -10,7 +23,7 @@
             <div class="p-3 mb-4 bg-light rounded border">
               <h5 class="text-dark mb-3">Data Filter Criteria</h5>
               <div class="row g-3">
-                <!-- 1. 按 RID 搜索 -->
+                <!-- 按患者编号搜索 -->
                 <div class="col-md-4">
                   <label class="form-label text-dark">Search Patient ID (RID)</label>
                   <input
@@ -21,7 +34,7 @@
                   />
                 </div>
 
-                <!-- 2. 按随访阶段 -->
+                <!-- 按随访阶段过滤 -->
                 <div class="col-md-4">
                   <label class="form-label text-dark">Filter by Visit Phase (VISCODE)</label>
                   <select v-model="searchVisitCode" class="form-select">
@@ -40,7 +53,7 @@
               </div>
             </div>
 
-            <!-- 数据表格展示 -->
+            <!-- 数据表格 -->
             <h5 class="text-dark mb-3">
               Patient Health Data Report
               <span class="badge bg-primary float-end"
@@ -60,20 +73,17 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <!-- 过滤后没有数据 -->
                   <tr v-if="filteredRecordList.length === 0">
-                    <td colspan="5" class="text-center text-muted py-4">
-                      No matching data found. Please adjust the filters above, or add new data in
-                      the Personal Health Portal.
-                    </td>
+                    <td colspan="5" class="text-center text-muted py-4">No matching data found.</td>
                   </tr>
-                  <!-- 过滤后有数据 -->
+
                   <tr v-for="(record, index) in filteredRecordList" v-bind:key="index">
                     <td class="fw-bold">{{ record.patientRID }}</td>
                     <td>{{ record.visitCode }}</td>
                     <td>{{ record.visitCode2 }}</td>
                     <td class="text-primary fw-bold">{{ record.mmseScore }}</td>
                     <td>
+                      <!-- 小于24分预警 -->
                       <span v-if="record.mmseScore < 24" class="badge bg-danger"
                         >Needs Attention (Low)</span
                       >
@@ -94,26 +104,29 @@
 export default {
   name: 'DashboardView',
 
-  // 数据变量
   data() {
     return {
+      // 存储当前登录用户的信息
+      currentUser: null,
+      // 存放所有原始数据
       allRecords: [],
+      // 绑定给搜索框的变量
       searchRID: '',
+      // 绑定给下拉菜单的变量
       searchVisitCode: '',
     }
   },
 
-  // 计算属性
   computed: {
     filteredRecordList() {
       return this.allRecords.filter((record) => {
-        // RID 匹配
+        // 检查 RID 是否匹配
         let isRidMatch = true
         if (this.searchRID !== '') {
           isRidMatch = record.patientRID.includes(this.searchRID)
         }
 
-        // VISCODE 匹配
+        // 检查阶段代码是否匹配
         let isVisitCodeMatch = true
         if (this.searchVisitCode !== '') {
           isVisitCodeMatch = record.visitCode === this.searchVisitCode
@@ -133,8 +146,13 @@ export default {
   },
 
   mounted() {
-    let savedData = localStorage.getItem('my_health_records')
+    let savedUser = localStorage.getItem('current_user')
+    if (savedUser !== null) {
+      this.currentUser = JSON.parse(savedUser)
+    }
 
+    // 页面加载时，读取所有历史健康数据
+    let savedData = localStorage.getItem('my_health_records')
     if (savedData !== null) {
       this.allRecords = JSON.parse(savedData)
     } else {

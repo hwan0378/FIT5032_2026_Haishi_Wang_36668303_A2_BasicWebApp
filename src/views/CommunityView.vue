@@ -12,7 +12,7 @@
             </p>
 
             <form v-on:submit.prevent="submitVolunteerRequest">
-              <!-- 姓名 -->
+              <!-- 用户姓名 -->
               <div class="mb-3">
                 <label class="form-label text-dark">Your Name</label>
                 <input
@@ -37,7 +37,12 @@
               <!-- 期望日期 -->
               <div class="mb-3">
                 <label class="form-label text-dark">Preferred Date</label>
-                <input type="date" v-model="newRequest.preferredDate" class="form-control" />
+                <input
+                  type="text"
+                  v-model="newRequest.preferredDate"
+                  class="form-control"
+                  placeholder="e.g., 2026-12-31"
+                />
               </div>
 
               <!-- 期望时间段 -->
@@ -65,11 +70,14 @@
               <button type="submit" class="btn btn-primary w-100 mt-2">Submit Request</button>
             </form>
 
+            <!-- 历史预约记录列表 -->
             <hr class="my-4" />
             <h5 class="text-dark fw-bold mb-3">My Pending Requests</h5>
+
             <div v-if="savedRequestList.length === 0" class="text-muted small">
               You have no pending volunteer requests.
             </div>
+
             <ul class="list-group">
               <li
                 v-for="(request, index) in savedRequestList"
@@ -91,7 +99,7 @@
         </div>
       </div>
 
-      <!-- 本地互助小组资源 -->
+      <!-- 本地互助小组卡片 -->
       <div class="col-md-6">
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-body">
@@ -156,18 +164,14 @@ export default {
         preferredDate: '',
         preferredTime: '',
       },
-      // 存放所有已经提交的预约记录
       savedRequestList: [],
-      // 存放报错信息的数组
       errorMessageList: [],
       isSubmissionSuccessful: false,
     }
   },
 
   mounted() {
-    // 页面打开时，从本地仓库读取之前的预约记录
     let savedData = localStorage.getItem('volunteer_requests')
-
     if (savedData !== null) {
       this.savedRequestList = JSON.parse(savedData)
     } else {
@@ -197,15 +201,20 @@ export default {
       }
 
       if (this.errorMessageList.length === 0) {
+        // 安全要求：防止 XSS 攻击
+        // 用正则强制替换危险的 HTML 标签，防止恶意代码注入
+        let safeUserName = this.newRequest.userName.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        let safeContact = this.newRequest.contactNumber.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        let safeDate = this.newRequest.preferredDate.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
         let requestToSave = {
-          userName: this.newRequest.userName,
-          contactNumber: this.newRequest.contactNumber,
-          preferredDate: this.newRequest.preferredDate,
+          userName: safeUserName,
+          contactNumber: safeContact,
+          preferredDate: safeDate,
           preferredTime: this.newRequest.preferredTime,
         }
 
         this.savedRequestList.push(requestToSave)
-
         localStorage.setItem('volunteer_requests', JSON.stringify(this.savedRequestList))
 
         this.isSubmissionSuccessful = true
@@ -218,9 +227,8 @@ export default {
     },
 
     cancelRequest(indexNumber) {
-      // 从数组中删除这一条记录
+      // 通过索引位置删除记录，并重新保存
       this.savedRequestList.splice(indexNumber, 1)
-      // 重新保存本地仓库
       localStorage.setItem('volunteer_requests', JSON.stringify(this.savedRequestList))
     },
   },

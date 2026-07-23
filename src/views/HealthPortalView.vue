@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="container mt-4">
+  <div class="container mt-4">
     <div class="row">
       <!-- 数据输入表单 -->
       <div class="col-md-5 mb-4">
@@ -8,7 +8,7 @@
             <h4 class="card-title fw-bold text-dark mb-4">Log Cognitive Assessment</h4>
 
             <form v-on:submit.prevent="saveNewRecord">
-              <!-- 1. 患者标识 (RID) -->
+              <!-- 输入患者编号 -->
               <div class="mb-3">
                 <label class="form-label text-dark">Patient ID (RID)</label>
                 <input
@@ -19,7 +19,7 @@
                 />
               </div>
 
-              <!-- 2. 基础随访阶段 (VISCODE) -->
+              <!-- 选择基础阶段 -->
               <div class="mb-3">
                 <label class="form-label text-dark">Visit Phase (VISCODE)</label>
                 <select v-model="newRecord.visitCode" class="form-select">
@@ -30,7 +30,7 @@
                 </select>
               </div>
 
-              <!-- 3. 辅助随访阶段 (VISCODE2) -->
+              <!-- 输入辅助阶段确认 -->
               <div class="mb-3">
                 <label class="form-label text-dark">Secondary Phase (VISCODE2)</label>
                 <input
@@ -41,7 +41,7 @@
                 />
               </div>
 
-              <!-- 4. 测试分数 -->
+              <!-- 输入认知分数 -->
               <div class="mb-3">
                 <label class="form-label text-dark">MMSE Score (0-30)</label>
                 <input
@@ -52,7 +52,6 @@
                 />
               </div>
 
-              <!-- 错误提示区域 -->
               <div v-if="errorMessageList.length > 0" class="alert alert-danger p-3">
                 <ul class="mb-0">
                   <li v-for="(message, index) in errorMessageList" v-bind:key="index">
@@ -67,13 +66,12 @@
         </div>
       </div>
 
-      <!-- 历史数据展示 -->
+      <!-- 历史数据展示区 -->
       <div class="col-md-7">
         <div class="card shadow-sm border-0">
           <div class="card-body">
             <h4 class="card-title fw-bold text-dark mb-4">
               Longitudinal Tracking History
-              <!-- 记录数量 -->
               <span class="badge bg-secondary float-end">Total: {{ totalRecordCount }}</span>
             </h4>
 
@@ -81,6 +79,7 @@
               No records found. Please add one on the left.
             </div>
 
+            <!-- 循环显示每一条记录 -->
             <ul class="list-group">
               <li
                 v-for="(record, index) in recordList"
@@ -112,7 +111,6 @@
 export default {
   name: 'HealthPortalView',
 
-  // 数据变量
   data() {
     return {
       newRecord: {
@@ -126,16 +124,16 @@ export default {
     }
   },
 
-  // 计算属性
   computed: {
+    // 动态计算数组的长度
     totalRecordCount() {
       return this.recordList.length
     },
   },
 
   mounted() {
+    // 页面加载时从本地读取旧数据
     let savedData = localStorage.getItem('my_health_records')
-
     if (savedData !== null) {
       this.recordList = JSON.parse(savedData)
     } else {
@@ -144,6 +142,7 @@ export default {
   },
 
   methods: {
+    // 保存记录
     saveNewRecord() {
       this.errorMessageList = []
 
@@ -154,6 +153,7 @@ export default {
       if (this.newRecord.visitCode === '') {
         this.errorMessageList.push('Please select a Visit Phase (VISCODE).')
       }
+
       if (this.newRecord.visitCode2 === '') {
         this.errorMessageList.push('Secondary Phase (VISCODE2) cannot be empty.')
       }
@@ -167,18 +167,22 @@ export default {
       }
 
       if (this.errorMessageList.length === 0) {
+        // 安全要求：防止 XSS 攻击
+        // 使用 replace 方法，强制把输入框里的 "<" 和 ">" 替换成无害的字符代码
+        let safeRID = this.newRecord.patientRID.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        let safeViscode2 = this.newRecord.visitCode2.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
         let recordToSave = {
-          patientRID: this.newRecord.patientRID,
+          patientRID: safeRID,
           visitCode: this.newRecord.visitCode,
-          visitCode2: this.newRecord.visitCode2,
+          visitCode2: safeViscode2,
           mmseScore: this.newRecord.mmseScore,
         }
 
+        // 保存本地
         this.recordList.push(recordToSave)
-
         localStorage.setItem('my_health_records', JSON.stringify(this.recordList))
 
-        // 保存成功后清空输入框
         this.newRecord.patientRID = ''
         this.newRecord.visitCode = ''
         this.newRecord.visitCode2 = ''
@@ -186,6 +190,7 @@ export default {
       }
     },
 
+    // 删除单条记录
     deleteRecord(indexNumber) {
       this.recordList.splice(indexNumber, 1)
       localStorage.setItem('my_health_records', JSON.stringify(this.recordList))
