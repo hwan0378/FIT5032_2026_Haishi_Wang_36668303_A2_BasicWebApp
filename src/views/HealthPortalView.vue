@@ -3,26 +3,24 @@
     <div class="row">
       <!-- 数据输入表单 -->
       <div class="col-md-5 mb-4">
-        <div class="card shadow-sm border-0">
-          <div class="card-body">
-            <h4 class="card-title fw-bold text-dark mb-4">Log Cognitive Assessment</h4>
+        <div class="card shadow border-2 border-primary rounded-4">
+          <div class="card-body p-4">
+            <h3 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">Log Assessment</h3>
 
             <form v-on:submit.prevent="saveNewRecord">
-              <!-- 输入患者编号 -->
-              <div class="mb-3">
-                <label class="form-label text-dark">Patient ID (RID)</label>
+              <div class="mb-4">
+                <label class="form-label text-dark fw-bold fs-5">Patient ID (RID)</label>
                 <input
                   type="text"
                   v-model="newRecord.patientRID"
-                  class="form-control"
+                  class="form-control form-control-lg border-2"
                   placeholder="e.g., 4021"
                 />
               </div>
 
-              <!-- 选择基础阶段 -->
-              <div class="mb-3">
-                <label class="form-label text-dark">Visit Phase (VISCODE)</label>
-                <select v-model="newRecord.visitCode" class="form-select">
+              <div class="mb-4">
+                <label class="form-label text-dark fw-bold fs-5">Visit Phase (VISCODE)</label>
+                <select v-model="newRecord.visitCode" class="form-select form-select-lg border-2">
                   <option value="">Select phase...</option>
                   <option value="bl">Baseline (bl)</option>
                   <option value="m06">Month 6 (m06)</option>
@@ -30,29 +28,27 @@
                 </select>
               </div>
 
-              <!-- 输入辅助阶段确认 -->
-              <div class="mb-3">
-                <label class="form-label text-dark">Secondary Phase (VISCODE2)</label>
+              <div class="mb-4">
+                <label class="form-label text-dark fw-bold fs-5">Secondary Phase</label>
                 <input
                   type="text"
                   v-model="newRecord.visitCode2"
-                  class="form-control"
+                  class="form-control form-control-lg border-2"
                   placeholder="e.g., m06"
                 />
               </div>
 
-              <!-- 输入认知分数 -->
-              <div class="mb-3">
-                <label class="form-label text-dark">MMSE Score (0-30)</label>
+              <div class="mb-4">
+                <label class="form-label text-dark fw-bold fs-5">MMSE Score (0-30)</label>
                 <input
                   type="number"
                   v-model="newRecord.mmseScore"
-                  class="form-control"
+                  class="form-control form-control-lg border-2"
                   placeholder="Enter score"
                 />
               </div>
 
-              <div v-if="errorMessageList.length > 0" class="alert alert-danger p-3">
+              <div v-if="errorMessageList.length > 0" class="alert alert-danger fs-5 fw-bold p-3">
                 <ul class="mb-0">
                   <li v-for="(message, index) in errorMessageList" v-bind:key="index">
                     {{ message }}
@@ -60,7 +56,9 @@
                 </ul>
               </div>
 
-              <button type="submit" class="btn btn-primary w-100 mt-2">Save Tracking Record</button>
+              <button type="submit" class="btn btn-primary btn-lg w-100 mt-2 fw-bold shadow-sm">
+                Save Tracking Record
+              </button>
             </form>
           </div>
         </div>
@@ -68,34 +66,37 @@
 
       <!-- 历史数据展示区 -->
       <div class="col-md-7">
-        <div class="card shadow-sm border-0">
-          <div class="card-body">
-            <h4 class="card-title fw-bold text-dark mb-4">
-              Longitudinal Tracking History
-              <span class="badge bg-secondary float-end">Total: {{ totalRecordCount }}</span>
-            </h4>
+        <div class="card shadow border-2 rounded-4 bg-light">
+          <div class="card-body p-4">
+            <h3 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">
+              Tracking History
+              <span class="badge bg-primary float-end fs-5">Total: {{ totalRecordCount }}</span>
+            </h3>
 
-            <div v-if="recordList.length === 0" class="text-muted text-center py-5">
+            <div v-if="recordList.length === 0" class="text-dark fs-5 text-center py-5 fw-bold">
               No records found. Please add one on the left.
             </div>
 
-            <!-- 循环显示每一条记录 -->
+            <!-- 列表加大字号和间距 -->
             <ul class="list-group">
               <li
                 v-for="(record, index) in recordList"
                 v-bind:key="index"
-                class="list-group-item d-flex justify-content-between align-items-center mb-2 shadow-sm border"
+                class="list-group-item d-flex justify-content-between align-items-center mb-3 shadow-sm border-1 border-secondary rounded-3 p-3"
               >
-                <div>
-                  <strong>RID: {{ record.patientRID }}</strong>
+                <div class="fs-5">
+                  <strong class="text-dark">RID: {{ record.patientRID }}</strong>
                   <br />
-                  <span class="text-muted"
-                    >Matched Phase: {{ record.visitCode }} / {{ record.visitCode2 }}</span
+                  <span class="text-secondary fw-bold"
+                    >Phase: {{ record.visitCode }} / {{ record.visitCode2 }}</span
                   >
                   <br />
-                  <span class="text-primary fw-bold">MMSE Score: {{ record.mmseScore }}</span>
+                  <span class="text-primary fw-bolder fs-4">Score: {{ record.mmseScore }}</span>
                 </div>
-                <button v-on:click="deleteRecord(index)" class="btn btn-outline-danger btn-sm">
+                <button
+                  v-on:click="deleteRecord(index)"
+                  class="btn btn-danger btn-lg fw-bold shadow-sm"
+                >
                   Remove
                 </button>
               </li>
@@ -110,7 +111,6 @@
 <script>
 export default {
   name: 'HealthPortalView',
-
   data() {
     return {
       newRecord: {
@@ -123,16 +123,12 @@ export default {
       errorMessageList: [],
     }
   },
-
   computed: {
-    // 动态计算数组的长度
     totalRecordCount() {
       return this.recordList.length
     },
   },
-
   mounted() {
-    // 页面加载时从本地读取旧数据
     let savedData = localStorage.getItem('my_health_records')
     if (savedData !== null) {
       this.recordList = JSON.parse(savedData)
@@ -140,24 +136,20 @@ export default {
       this.recordList = []
     }
   },
-
   methods: {
-    // 保存记录
     saveNewRecord() {
       this.errorMessageList = []
 
+      // 表单校验：检查必填项与分数边界范围限制
       if (this.newRecord.patientRID === '') {
         this.errorMessageList.push('Patient ID (RID) cannot be empty.')
       }
-
       if (this.newRecord.visitCode === '') {
         this.errorMessageList.push('Please select a Visit Phase (VISCODE).')
       }
-
       if (this.newRecord.visitCode2 === '') {
         this.errorMessageList.push('Secondary Phase (VISCODE2) cannot be empty.')
       }
-
       if (this.newRecord.mmseScore === '' || this.newRecord.mmseScore === null) {
         this.errorMessageList.push('Please enter an MMSE score.')
       } else if (this.newRecord.mmseScore < 0) {
@@ -167,8 +159,7 @@ export default {
       }
 
       if (this.errorMessageList.length === 0) {
-        // 安全要求：防止 XSS 攻击
-        // 使用 replace 方法，强制把输入框里的 "<" 和 ">" 替换成无害的字符代码
+        // 安全机制：清理关键字符串，防御跨站脚本攻击 (XSS)
         let safeRID = this.newRecord.patientRID.replace(/</g, '&lt;').replace(/>/g, '&gt;')
         let safeViscode2 = this.newRecord.visitCode2.replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -179,7 +170,6 @@ export default {
           mmseScore: this.newRecord.mmseScore,
         }
 
-        // 保存本地
         this.recordList.push(recordToSave)
         localStorage.setItem('my_health_records', JSON.stringify(this.recordList))
 
@@ -189,8 +179,6 @@ export default {
         this.newRecord.mmseScore = ''
       }
     },
-
-    // 删除单条记录
     deleteRecord(indexNumber) {
       this.recordList.splice(indexNumber, 1)
       localStorage.setItem('my_health_records', JSON.stringify(this.recordList))

@@ -1,58 +1,72 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
-    <div class="container">
-      <router-link class="navbar-brand text-primary fw-bold" to="/">ElderCare Charity</router-link>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarNav"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto gap-2">
-          <li class="nav-item">
-            <router-link class="nav-link" to="/health-portal">My Health</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link class="nav-link" to="/resources">Resources</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link class="nav-link" to="/community">Community</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link class="nav-link" to="/dashboard">Dashboard</router-link>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+  <div id="app">
+    <!-- 顶部导航栏 -->
+    <nav
+      class="navbar navbar-expand-lg navbar-light bg-light border-bottom border-2 mb-4 shadow-sm py-3"
+    >
+      <div class="container">
+        <!-- 网站 Logo -->
+        <router-link class="navbar-brand text-primary fw-bolder fs-3" to="/">
+          ElderCare Charity
+        </router-link>
 
-  <main class="container mt-4">
-    <router-view></router-view>
-  </main>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- 导航链接菜单 -->
+        <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+          <ul class="navbar-nav gap-3">
+            <li class="nav-item">
+              <router-link class="nav-link text-dark fw-bold fs-5" to="/health-portal">
+                My Health
+              </router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link class="nav-link text-dark fw-bold fs-5" to="/resources">
+                Resources
+              </router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link class="nav-link text-dark fw-bold fs-5" to="/community">
+                Community
+              </router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link class="nav-link text-dark fw-bold fs-5" to="/dashboard">
+                Dashboard
+              </router-link>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <router-view />
+  </div>
 </template>
 
+<script>
+export default {
+  name: 'App',
+}
+</script>
+
 <style>
-html,
 body {
-  font-size: 18px;
-  background-color: #fcfcfc;
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-#app .navbar-brand,
-#app .nav-link,
-#app .btn {
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-#app p {
-  line-height: 1.7;
-}
-
-#app .text-muted {
-  color: #495057;
+.nav-link:hover {
+  color: #0d6efd !important;
 }
 </style>
