@@ -25,6 +25,7 @@
                   <option value="bl">Baseline (bl)</option>
                   <option value="m06">Month 6 (m06)</option>
                   <option value="m12">Month 12 (m12)</option>
+                  <option value="m18">Month 18 (m18)</option>
                 </select>
               </div>
 

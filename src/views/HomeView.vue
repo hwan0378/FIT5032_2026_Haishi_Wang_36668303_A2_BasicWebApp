@@ -63,6 +63,19 @@
                     v-model="registerForm.password"
                     class="form-control form-control-lg border-2"
                   />
+                  <div class="mt-2 text-secondary fw-bold fs-6">
+                    Must be at least 8 characters, include an uppercase letter, a lowercase letter,
+                    and a number.
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-dark fw-bold fs-5">Confirm Password</label>
+                  <input
+                    type="password"
+                    v-model="registerForm.confirmPassword"
+                    class="form-control form-control-lg border-2"
+                  />
                 </div>
 
                 <div class="mb-4">
@@ -189,6 +202,7 @@ export default {
       registerForm: {
         username: '',
         password: '',
+        confirmPassword: '',
         role: '',
       },
     }
@@ -206,9 +220,36 @@ export default {
       if (
         this.registerForm.username === '' ||
         this.registerForm.password === '' ||
+        this.registerForm.confirmPassword === '' ||
         this.registerForm.role === ''
       ) {
         this.authErrorMessage = 'Please fill in all registration fields.'
+        return
+      }
+
+      // 密码一致性校验
+      if (this.registerForm.password !== this.registerForm.confirmPassword) {
+        this.authErrorMessage = 'Passwords do not match.'
+        return
+      }
+
+      // 密码复杂度校验
+      let pwd = this.registerForm.password
+
+      if (pwd.length < 8) {
+        this.authErrorMessage = 'Password must be at least 8 characters long.'
+        return
+      }
+      if (/[a-z]/.test(pwd) === false) {
+        this.authErrorMessage = 'Password must include at least one lowercase letter.'
+        return
+      }
+      if (/[A-Z]/.test(pwd) === false) {
+        this.authErrorMessage = 'Password must include at least one uppercase letter.'
+        return
+      }
+      if (/[0-9]/.test(pwd) === false) {
+        this.authErrorMessage = 'Password must include at least one number.'
         return
       }
 
@@ -219,7 +260,7 @@ export default {
         parsedUsers = JSON.parse(allUsers)
       }
 
-      // 封装新用户对象，包含身份标识 (role)
+      // 封装新用户对象
       let newUser = {
         username: this.registerForm.username,
         password: this.registerForm.password,
@@ -231,8 +272,10 @@ export default {
 
       this.isLoginMode = true
       this.authErrorMessage = 'Registration successful! Please login.'
+
       this.registerForm.username = ''
       this.registerForm.password = ''
+      this.registerForm.confirmPassword = ''
       this.registerForm.role = ''
     },
 
@@ -247,7 +290,7 @@ export default {
 
       let foundUser = null
 
-      // 身份校验：遍历本地用户库对比账户
+      // 遍历本地用户库对比账户
       for (let i = 0; i < parsedUsers.length; i++) {
         if (
           parsedUsers[i].username === this.loginForm.username &&
