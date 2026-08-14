@@ -23,6 +23,14 @@
           >
             Clear Filters
           </button>
+
+          <button
+            type="button"
+            v-on:click="exportCSV"
+            class="btn btn-success btn-lg fw-bold shadow-sm"
+          >
+            Export CSV
+          </button>
         </div>
       </div>
 
@@ -138,6 +146,8 @@
 </template>
 
 <script>
+import { exportToCSV } from '../utils/export'
+
 export default {
   name: 'DataTable',
   props: {
@@ -336,6 +346,13 @@ export default {
         return ''
       }
       return value
+    },
+
+    // 把当前筛选与排序后的结果导出为 CSV 文件
+    exportCSV() {
+      const baseName = this.caption === '' ? 'data_export' : this.caption
+      const filename = baseName.replace(/\s+/g, '_') + '.csv'
+      exportToCSV(this.sortedRows, this.columns, filename)
     },
   },
 }

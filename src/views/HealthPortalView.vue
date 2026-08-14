@@ -74,6 +74,15 @@
               <span class="badge bg-primary float-end fs-5">Total: {{ totalRecordCount }}</span>
             </h3>
 
+            <!-- 导出 PDF 报告按钮 -->
+            <button
+              type="button"
+              v-on:click="exportPDFReport"
+              class="btn btn-success btn-lg fw-bold shadow-sm mb-3"
+            >
+              Export PDF Report
+            </button>
+
             <div v-if="recordList.length === 0" class="text-dark fs-5 text-center py-5 fw-bold">
               No records found. Please add one on the left.
             </div>
@@ -110,6 +119,8 @@
 </template>
 
 <script>
+import { exportToPDF } from '../utils/export'
+
 export default {
   name: 'HealthPortalView',
   data() {
@@ -122,6 +133,13 @@ export default {
       },
       recordList: [],
       errorMessageList: [],
+      // PDF 报告里的列配置
+      reportColumns: [
+        { key: 'patientRID', label: 'Patient ID (RID)' },
+        { key: 'visitCode', label: 'Visit Phase (VISCODE)' },
+        { key: 'visitCode2', label: 'Secondary Phase (VISCODE2)' },
+        { key: 'mmseScore', label: 'MMSE Score' },
+      ],
     }
   },
   computed: {
@@ -183,6 +201,15 @@ export default {
     deleteRecord(indexNumber) {
       this.recordList.splice(indexNumber, 1)
       localStorage.setItem('my_health_records', JSON.stringify(this.recordList))
+    },
+
+    // 把当前所有健康记录导出为 PDF 报告
+    exportPDFReport() {
+      if (this.recordList.length === 0) {
+        alert('No records to export. Please add a record first.')
+        return
+      }
+      exportToPDF(this.recordList, this.reportColumns, 'Health_Assessment_Report.pdf', 'My Health Assessment Report')
     },
   },
 }
