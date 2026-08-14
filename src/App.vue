@@ -41,6 +41,12 @@
             </li>
 
             <li class="nav-item">
+              <router-link class="nav-link text-dark fw-bold fs-5" to="/directory">
+                Directory
+              </router-link>
+            </li>
+
+            <li class="nav-item">
               <router-link class="nav-link text-dark fw-bold fs-5" to="/dashboard">
                 Dashboard
               </router-link>

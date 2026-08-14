@@ -6,7 +6,7 @@
     </div>
 
     <div class="row">
-      <!-- 左侧文章区 -->
+      <!-- 文章区 -->
       <div class="col-md-6 mb-4">
         <h3 class="fw-bolder text-primary mb-4 border-bottom pb-2">Featured Articles</h3>
 
@@ -27,39 +27,28 @@
                 {{ point }}
               </li>
             </ul>
-          </div>
-        </div>
 
-        <!-- 网站评分卡片 -->
-        <div class="card shadow border-3 border-warning rounded-4 mb-4 bg-light">
-          <div class="card-body p-4">
-            <h3 class="card-title fw-bolder text-dark border-bottom border-warning pb-3">
-              Rate Our Website
-            </h3>
-            <p class="text-dark fw-bold fs-5 mb-4">
-              How would you rate your experience with the ElderCare platform?
-            </p>
+            <hr class="my-4 border-secondary border-2 opacity-25" />
 
-            <div
-              class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-3 border"
-            >
-              <span class="badge bg-warning text-dark fs-4 p-2 shadow-sm">
-                Average: {{ calculateWebsiteAverageRating() }} ★
+            <!-- 文章评分区 -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-warning text-dark fs-5 p-2 shadow-sm">
+                Avg Rating: {{ calculateArticleAverage(article.ratings) }} ★
               </span>
-              <span class="text-dark fw-bold fs-5">({{ websiteRatings.length }} reviews)</span>
+              <span class="text-dark fw-bold fs-6">({{ article.ratings.length }} reviews)</span>
             </div>
 
             <div class="input-group input-group-lg shadow-sm">
-              <span class="input-group-text bg-dark text-white fw-bold">Your Rating:</span>
-              <select v-model="userSelectedScore" class="form-select border-dark">
-                <option value="5">5 Stars - Excellent</option>
-                <option value="4">4 Stars - Good</option>
-                <option value="3">3 Stars - Average</option>
-                <option value="2">2 Stars - Poor</option>
-                <option value="1">1 Star - Terrible</option>
+              <span class="input-group-text bg-dark text-white fw-bold">Rate:</span>
+              <select v-model="article.currentUserScore" class="form-select border-dark">
+                <option value="5">5 - Excellent</option>
+                <option value="4">4 - Good</option>
+                <option value="3">3 - Average</option>
+                <option value="2">2 - Poor</option>
+                <option value="1">1 - Terrible</option>
               </select>
               <button
-                v-on:click="submitWebsiteRating"
+                v-on:click="submitArticleRating(index)"
                 class="btn btn-warning fw-bolder text-dark px-4"
               >
                 Submit
@@ -69,7 +58,7 @@
         </div>
       </div>
 
-      <!-- 右侧 FAQ -->
+      <!-- FAQ -->
       <div class="col-md-6">
         <h3 class="fw-bolder text-primary mb-4 border-bottom pb-2">Caregiver FAQ</h3>
 
@@ -117,6 +106,8 @@ export default {
             "Learn a New Skill: Whether it's a new recipe or a simple craft, learning challenges your brain.",
             'Stay Social: Regular conversations significantly reduce the risk of cognitive decline.',
           ],
+          ratings: [5, 4, 5],
+          currentUserScore: 5,
         },
         {
           title: 'Fall Prevention at Home: A Safety Checklist',
@@ -125,6 +116,8 @@ export default {
             'Install grab bars in the bathroom near the toilet and inside the shower.',
             'Improve lighting in hallways and staircases to ensure clear visibility at night.',
           ],
+          ratings: [5, 5],
+          currentUserScore: 5,
         },
       ],
       faqList: [
@@ -137,38 +130,44 @@ export default {
           answer: 'Yes, they are sponsored and completely free.',
         },
       ],
-      userSelectedScore: 5,
-      websiteRatings: [],
     }
   },
   mounted() {
-    let savedRatings = localStorage.getItem('website_ratings_data')
-    if (savedRatings !== null) {
-      this.websiteRatings = JSON.parse(savedRatings)
-    } else {
-      this.websiteRatings = []
+    // 页面加载时，读取整个文章列表的数据（包含用户最新打的分数）
+    let savedArticles = localStorage.getItem('article_ratings_data')
+    if (savedArticles !== null) {
+      this.articleList = JSON.parse(savedArticles)
     }
   },
   methods: {
-    calculateWebsiteAverageRating() {
-      if (this.websiteRatings.length === 0) {
+    // 传入当前文章的评分数组，计算均值
+    calculateArticleAverage(ratingsArray) {
+      if (ratingsArray.length === 0) {
         return 'No ratings'
       }
 
-      // 评分：遍历历史评分求和，保留 1 位小数
       let totalSum = 0
-      for (let i = 0; i < this.websiteRatings.length; i++) {
-        totalSum = totalSum + this.websiteRatings[i]
+      for (let i = 0; i < ratingsArray.length; i++) {
+        totalSum = totalSum + ratingsArray[i]
       }
 
-      let average = totalSum / this.websiteRatings.length
+      let average = totalSum / ratingsArray.length
       return average.toFixed(1)
     },
-    submitWebsiteRating() {
-      let newScore = parseInt(this.userSelectedScore)
-      this.websiteRatings.push(newScore)
-      localStorage.setItem('website_ratings_data', JSON.stringify(this.websiteRatings))
-      alert('Thank you for your feedback!')
+
+    // 提交单篇文章的新分数
+    submitArticleRating(articleIndex) {
+      // 通过索引找到用户正在打分的具体文章
+      let article = this.articleList[articleIndex]
+
+      // 把选中的分数转为数字，并推入该文章的评分数组
+      let newScore = parseInt(article.currentUserScore)
+      article.ratings.push(newScore)
+
+      // 将更新后的整个 articleList 数组存入 LocalStorage
+      localStorage.setItem('article_ratings_data', JSON.stringify(this.articleList))
+
+      alert('Thank you for rating this article!')
     },
   },
 }

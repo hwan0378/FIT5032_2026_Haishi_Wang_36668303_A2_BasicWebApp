@@ -1,6 +1,6 @@
 <template>
   <div class="container mt-4">
-    <!-- 拦截未登录或非管理员角色的用户访问 -->
+    <!-- 拦截未登录或非协调员角色的用户访问 -->
     <div
       v-if="currentUser === null || currentUser.role !== 'Coordinator'"
       class="alert alert-danger text-center p-5 mt-5 shadow border-2 rounded-4"
@@ -17,127 +17,62 @@
     <!-- 后台界面 -->
     <div v-else class="row">
       <div class="col-12">
-        <div class="card shadow border-2 border-dark rounded-4">
-          <div class="card-body p-4">
-            <h2 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">
-              Coordinator Dashboard
-            </h2>
+        <h2 class="fw-bolder text-dark mb-4">Coordinator Dashboard</h2>
 
-            <!-- 搜索与筛选区域 -->
-            <div class="p-4 mb-4 bg-light rounded-4 border border-2 border-secondary shadow-sm">
-              <h4 class="text-dark fw-bold mb-3">Data Filter Criteria</h4>
-              <div class="row g-3">
-                <div class="col-md-4">
-                  <label class="form-label text-dark fw-bold fs-5">Search Patient ID (RID)</label>
-                  <input
-                    type="text"
-                    v-model="searchRID"
-                    class="form-control form-control-lg border-2"
-                    placeholder="Enter RID..."
-                  />
-                </div>
-
-                <div class="col-md-4">
-                  <label class="form-label text-dark fw-bold fs-5">Filter by Visit Phase</label>
-                  <select v-model="searchVisitCode" class="form-select form-select-lg border-2">
-                    <option value="">All Phases</option>
-                    <option value="bl">Baseline (bl)</option>
-                    <option value="m06">Month 6 (m06)</option>
-                    <option value="m12">Month 12 (m12)</option>
-                  </select>
-                </div>
-
-                <div class="col-md-4 d-flex align-items-end">
-                  <button
-                    v-on:click="clearFilters"
-                    class="btn btn-dark btn-lg w-100 fw-bold shadow-sm"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- 数据表格 -->
-            <h4 class="text-dark fw-bold mb-3 mt-5">
-              Patient Health Data Report
-              <span class="badge bg-primary float-end fs-5"
-                >Total: {{ filteredRecordCount }} records</span
-              >
-            </h4>
-
-            <div class="table-responsive rounded-3 shadow-sm border border-2">
-              <table class="table table-striped table-hover table-bordered mb-0">
-                <thead class="table-dark fs-5">
-                  <tr>
-                    <th class="p-3">Patient ID (RID)</th>
-                    <th class="p-3">Visit Phase (VISCODE)</th>
-                    <th class="p-3">Secondary Phase (VISCODE2)</th>
-                    <th class="p-3">MMSE Score</th>
-                    <th class="p-3">Assessment Status</th>
-                  </tr>
-                </thead>
-                <tbody class="fs-5 text-dark fw-bold">
-                  <tr v-if="filteredRecordList.length === 0">
-                    <td colspan="5" class="text-center py-5">No matching data found.</td>
-                  </tr>
-
-                  <tr v-for="(record, index) in filteredRecordList" v-bind:key="index">
-                    <td class="p-3 text-primary fw-bolder">{{ record.patientRID }}</td>
-                    <td class="p-3">{{ record.visitCode }}</td>
-                    <td class="p-3">{{ record.visitCode2 }}</td>
-                    <td class="p-3 text-danger fw-bolder fs-4">{{ record.mmseScore }}</td>
-                    <td class="p-3">
-                      <span v-if="record.mmseScore < 24" class="badge bg-danger fs-6 p-2"
-                        >Needs Attention (Low)</span
-                      >
-                      <span v-else class="badge bg-success fs-6 p-2">Good Status</span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <!-- 表 1：患者健康数据表（支持排序 / 全局搜索 / 按列搜索 / 分页） -->
+        <DataTable
+          v-bind:table-data="healthRecords"
+          v-bind:columns="healthColumns"
+          caption="Patient Health Data Report"
+        >
+          <!-- 评估状态列使用自定义显示：按分数显示不同颜色的徽章 -->
+          <template v-slot:status="{ row }">
+            <span v-if="row.status === 'Needs Attention (Low)'" class="badge bg-danger fs-6 p-2">
+              Needs Attention (Low)
+            </span>
+            <span v-else class="badge bg-success fs-6 p-2">Good Status</span>
+          </template>
+        </DataTable>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import DataTable from '../components/DataTable.vue'
+
 export default {
   name: 'DashboardView',
+  components: {
+    DataTable,
+  },
   data() {
     return {
       currentUser: null,
       allRecords: [],
-      searchRID: '',
-      searchVisitCode: '',
+      // 表 1 的列配置；sortType 决定排序时用数值还是文本比较
+      healthColumns: [
+        { key: 'patientRID', label: 'Patient ID (RID)', sortType: 'string' },
+        { key: 'visitCode', label: 'Visit Phase (VISCODE)', sortType: 'string' },
+        { key: 'visitCode2', label: 'Secondary Phase (VISCODE2)', sortType: 'string' },
+        { key: 'mmseScore', label: 'MMSE Score', sortType: 'number' },
+        { key: 'status', label: 'Assessment Status', sortType: 'string' },
+      ],
     }
   },
   computed: {
-    filteredRecordList() {
-      return this.allRecords.filter((record) => {
-        let isRidMatch = true
-        if (this.searchRID !== '') {
-          isRidMatch = record.patientRID.includes(this.searchRID)
-        }
-
-        let isVisitCodeMatch = true
-        if (this.searchVisitCode !== '') {
-          isVisitCodeMatch = record.visitCode === this.searchVisitCode
-        }
-
-        // 仅当 RID 与 VISCODE 条件同时满足时才展示
-        if (isRidMatch === true && isVisitCodeMatch === true) {
-          return true
-        } else {
-          return false
+    // 把原始记录转换成表格需要的数据：额外算出评估状态文字（用于排序与搜索）
+    healthRecords() {
+      return this.allRecords.map((record) => {
+        const isLowScore = record.mmseScore < 24
+        return {
+          patientRID: record.patientRID,
+          visitCode: record.visitCode,
+          visitCode2: record.visitCode2,
+          mmseScore: record.mmseScore,
+          status: isLowScore ? 'Needs Attention (Low)' : 'Good Status',
         }
       })
-    },
-    filteredRecordCount() {
-      return this.filteredRecordList.length
     },
   },
   mounted() {
@@ -153,18 +88,7 @@ export default {
       this.allRecords = []
     }
   },
-  methods: {
-    clearFilters() {
-      this.searchRID = ''
-      this.searchVisitCode = ''
-    },
-  },
 }
 </script>
 
-<style scoped>
-.table th,
-.table td {
-  vertical-align: middle;
-}
-</style>
+<style scoped></style>

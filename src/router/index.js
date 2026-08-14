@@ -26,6 +26,11 @@ const router = createRouter({
       component: () => import('../views/CommunityView.vue'),
     },
     {
+      path: '/directory',
+      name: 'directory',
+      component: () => import('../views/DirectoryView.vue'),
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../views/DashboardView.vue'),
