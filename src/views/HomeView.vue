@@ -13,7 +13,7 @@
                 Register New Account
               </h1>
 
-              <!-- 错误/成功提示：role=alert 让屏幕阅读器自动播报 -->
+              <!-- 错误提示：role=alert 让屏幕阅读器自动播报 -->
               <div
                 v-if="authErrorMessage !== ''"
                 id="auth-alert"
@@ -23,22 +23,22 @@
                 {{ authErrorMessage }}
               </div>
 
-              <!-- 登录表单 -->
+              <!-- 登录表单（邮箱 + 密码） -->
               <form
                 v-if="isLoginMode === true"
-                v-on:submit.prevent="loginUser"
+                v-on:submit.prevent="handleLogin"
                 aria-describedby="auth-alert"
               >
                 <div class="mb-3">
-                  <label class="form-label text-dark fw-bold fs-5" for="loginUsername"
-                    >Username</label
+                  <label class="form-label text-dark fw-bold fs-5" for="loginEmail"
+                    >Email Address</label
                   >
                   <input
-                    id="loginUsername"
-                    type="text"
-                    v-model="loginForm.username"
+                    id="loginEmail"
+                    type="email"
+                    v-model="loginForm.email"
                     class="form-control form-control-lg border-2"
-                    autocomplete="username"
+                    autocomplete="email"
                   />
                 </div>
                 <div class="mb-4">
@@ -53,21 +53,23 @@
                     autocomplete="current-password"
                   />
                 </div>
-                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3 fw-bold">
-                  Login
+                <button
+                  type="submit"
+                  class="btn btn-primary btn-lg w-100 mb-3 fw-bold"
+                  v-bind:disabled="isSubmitting"
+                >
+                  {{ isSubmitting ? 'Signing in...' : 'Login' }}
                 </button>
                 <p class="text-center text-dark fs-5">
                   Don't have an account?
-                  <a href="#" class="fw-bold" v-on:click.prevent="isLoginMode = false"
-                    >Register here</a
-                  >
+                  <a href="#" class="fw-bold" v-on:click.prevent="switchMode">Register here</a>
                 </p>
               </form>
 
-              <!-- 注册表单 -->
+              <!-- 注册表单（用户名 + 邮箱 + 密码 + 角色） -->
               <form
                 v-if="isLoginMode === false"
-                v-on:submit.prevent="registerUser"
+                v-on:submit.prevent="handleRegister"
                 aria-describedby="auth-alert"
               >
                 <div class="mb-3">
@@ -80,6 +82,18 @@
                     v-model="registerForm.username"
                     class="form-control form-control-lg border-2"
                     autocomplete="username"
+                  />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label text-dark fw-bold fs-5" for="regEmail"
+                    >Email Address</label
+                  >
+                  <input
+                    id="regEmail"
+                    type="email"
+                    v-model="registerForm.email"
+                    class="form-control form-control-lg border-2"
+                    autocomplete="email"
                   />
                 </div>
                 <div class="mb-3">
@@ -127,12 +141,16 @@
                   </select>
                 </div>
 
-                <button type="submit" class="btn btn-success btn-lg w-100 mb-3 fw-bold">
-                  Register
+                <button
+                  type="submit"
+                  class="btn btn-success btn-lg w-100 mb-3 fw-bold"
+                  v-bind:disabled="isSubmitting"
+                >
+                  {{ isSubmitting ? 'Creating account...' : 'Register' }}
                 </button>
                 <p class="text-center text-dark fs-5">
                   Already have an account?
-                  <a href="#" class="fw-bold" v-on:click.prevent="isLoginMode = true">Login here</a>
+                  <a href="#" class="fw-bold" v-on:click.prevent="switchMode">Login here</a>
                 </p>
               </form>
             </div>
@@ -169,7 +187,7 @@
             <router-link to="/community" class="btn btn-dark btn-lg px-4 fw-bold shadow-sm">
               Find Local Support
             </router-link>
-            <button v-on:click="logoutUser" class="btn btn-danger btn-lg px-4 fw-bold shadow-sm">
+            <button v-on:click="handleLogout" class="btn btn-danger btn-lg px-4 fw-bold shadow-sm">
               Logout
             </button>
           </div>
@@ -228,42 +246,79 @@
 </template>
 
 <script>
+// 引入认证服务：注册后自动登录，登录 / 登出都交给 Firebase 处理
+import {
+  registerUser,
+  loginUser,
+  logoutUser,
+  restoreSession,
+  getFirebaseErrorMessage,
+} from '../services/auth'
+
 export default {
   name: 'HomeView',
   data() {
     return {
-      currentUser: null,
-      isLoginMode: true,
-      authErrorMessage: '',
+      currentUser: null, // 当前登录的用户（null 表示未登录）
+      isLoginMode: true, // true = 显示登录表单，false = 显示注册表单
+      authErrorMessage: '', // 表单上方的错误提示文字
+      isSubmitting: false, // 提交中禁用按钮，避免重复点击
       loginForm: {
-        username: '',
+        email: '',
         password: '',
       },
       registerForm: {
         username: '',
+        email: '',
         password: '',
         confirmPassword: '',
         role: '',
       },
     }
   },
-  mounted() {
-    let savedUser = localStorage.getItem('current_user')
-    if (savedUser !== null) {
-      this.currentUser = JSON.parse(savedUser)
+  async mounted() {
+    // 刷新页面后：等待 Firebase 恢复会话，再决定显示登录框还是主页
+    try {
+      const profile = await restoreSession()
+      if (profile !== null) {
+        this.currentUser = profile
+      }
+    } catch {
+      // 网络异常时保持未登录状态，用户可稍后重试
     }
   },
   methods: {
-    registerUser() {
+    // 校验邮箱格式是否合法
+    isValidEmail(email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return emailPattern.test(email)
+    },
+
+    // 切换登录 / 注册表单时，清掉上次的错误提示
+    switchMode() {
+      this.isLoginMode = !this.isLoginMode
+      this.authErrorMessage = ''
+    },
+
+    // 提交注册：先做前端校验，再调用 Firebase 创建账户
+    async handleRegister() {
       this.authErrorMessage = ''
 
+      // 必填项校验
       if (
         this.registerForm.username === '' ||
+        this.registerForm.email === '' ||
         this.registerForm.password === '' ||
         this.registerForm.confirmPassword === '' ||
         this.registerForm.role === ''
       ) {
         this.authErrorMessage = 'Please fill in all registration fields.'
+        return
+      }
+
+      // 邮箱格式校验
+      if (this.isValidEmail(this.registerForm.email) === false) {
+        this.authErrorMessage = 'Please enter a valid email address.'
         return
       }
 
@@ -273,9 +328,8 @@ export default {
         return
       }
 
-      // 密码复杂度校验
-      let pwd = this.registerForm.password
-
+      // 密码复杂度校验（沿用 A2 的规则）
+      const pwd = this.registerForm.password
       if (pwd.length < 8) {
         this.authErrorMessage = 'Password must be at least 8 characters long.'
         return
@@ -293,66 +347,64 @@ export default {
         return
       }
 
-      let allUsers = localStorage.getItem('registered_users')
-      let parsedUsers = []
+      this.isSubmitting = true
+      try {
+        // 注册成功后 Firebase 会自动登录，直接进入主页内容
+        this.currentUser = await registerUser(
+          this.registerForm.email,
+          this.registerForm.username,
+          this.registerForm.password,
+          this.registerForm.role,
+        )
 
-      if (allUsers !== null) {
-        parsedUsers = JSON.parse(allUsers)
+        // 清空注册表单
+        this.registerForm.username = ''
+        this.registerForm.email = ''
+        this.registerForm.password = ''
+        this.registerForm.confirmPassword = ''
+        this.registerForm.role = ''
+      } catch (error) {
+        // 把 Firebase 错误代码翻译成友好的提示
+        this.authErrorMessage = getFirebaseErrorMessage(error)
+      } finally {
+        this.isSubmitting = false
       }
-
-      // 封装新用户对象
-      let newUser = {
-        username: this.registerForm.username,
-        password: this.registerForm.password,
-        role: this.registerForm.role,
-      }
-
-      parsedUsers.push(newUser)
-      localStorage.setItem('registered_users', JSON.stringify(parsedUsers))
-
-      this.isLoginMode = true
-      this.authErrorMessage = 'Registration successful! Please login.'
-
-      this.registerForm.username = ''
-      this.registerForm.password = ''
-      this.registerForm.confirmPassword = ''
-      this.registerForm.role = ''
     },
 
-    loginUser() {
+    // 提交登录：调用 Firebase 校验邮箱密码
+    async handleLogin() {
       this.authErrorMessage = ''
-      let allUsers = localStorage.getItem('registered_users')
-      let parsedUsers = []
 
-      if (allUsers !== null) {
-        parsedUsers = JSON.parse(allUsers)
+      // 邮箱格式校验
+      if (this.isValidEmail(this.loginForm.email) === false) {
+        this.authErrorMessage = 'Please enter a valid email address.'
+        return
+      }
+      if (this.loginForm.password === '') {
+        this.authErrorMessage = 'Please enter your password.'
+        return
       }
 
-      let foundUser = null
-
-      // 遍历本地用户库对比账户
-      for (let i = 0; i < parsedUsers.length; i++) {
-        if (
-          parsedUsers[i].username === this.loginForm.username &&
-          parsedUsers[i].password === this.loginForm.password
-        ) {
-          foundUser = parsedUsers[i]
-        }
-      }
-
-      if (foundUser !== null) {
-        this.currentUser = foundUser
-        localStorage.setItem('current_user', JSON.stringify(foundUser))
-        this.loginForm.username = ''
+      this.isSubmitting = true
+      try {
+        this.currentUser = await loginUser(this.loginForm.email, this.loginForm.password)
+        this.loginForm.email = ''
         this.loginForm.password = ''
-      } else {
-        this.authErrorMessage = 'Invalid username or password.'
+      } catch (error) {
+        this.authErrorMessage = getFirebaseErrorMessage(error)
+      } finally {
+        this.isSubmitting = false
       }
     },
 
-    logoutUser() {
+    // 登出：退出 Firebase 并回到登录框
+    async handleLogout() {
+      try {
+        await logoutUser()
+      } catch {
+        // 即使登出请求失败，也照常清理本地登录状态
+      }
       this.currentUser = null
-      localStorage.removeItem('current_user')
       this.isLoginMode = true
     },
   },
