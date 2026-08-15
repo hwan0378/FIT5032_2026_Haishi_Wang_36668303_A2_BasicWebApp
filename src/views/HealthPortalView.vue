@@ -1,16 +1,21 @@
 <template>
   <div class="container mt-4">
+    <h1 class="fw-bolder text-dark mb-4">My Health Portal</h1>
+
     <div class="row">
       <!-- 数据输入表单 -->
       <div class="col-md-5 mb-4">
         <div class="card shadow border-2 border-primary rounded-4">
           <div class="card-body p-4">
-            <h3 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">Log Assessment</h3>
+            <h2 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">Log Assessment</h2>
 
-            <form v-on:submit.prevent="saveNewRecord">
+            <form v-on:submit.prevent="saveNewRecord" aria-describedby="health-form-errors">
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">Patient ID (RID)</label>
+                <label class="form-label text-dark fw-bold fs-5" for="patientRID"
+                  >Patient ID (RID)</label
+                >
                 <input
+                  id="patientRID"
                   type="text"
                   v-model="newRecord.patientRID"
                   class="form-control form-control-lg border-2"
@@ -19,8 +24,14 @@
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">Visit Phase (VISCODE)</label>
-                <select v-model="newRecord.visitCode" class="form-select form-select-lg border-2">
+                <label class="form-label text-dark fw-bold fs-5" for="visitCode"
+                  >Visit Phase (VISCODE)</label
+                >
+                <select
+                  id="visitCode"
+                  v-model="newRecord.visitCode"
+                  class="form-select form-select-lg border-2"
+                >
                   <option value="">Select phase...</option>
                   <option value="bl">Baseline (bl)</option>
                   <option value="m06">Month 6 (m06)</option>
@@ -30,8 +41,11 @@
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">Secondary Phase</label>
+                <label class="form-label text-dark fw-bold fs-5" for="visitCode2"
+                  >Secondary Phase</label
+                >
                 <input
+                  id="visitCode2"
                   type="text"
                   v-model="newRecord.visitCode2"
                   class="form-control form-control-lg border-2"
@@ -40,16 +54,27 @@
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">MMSE Score (0-30)</label>
+                <label class="form-label text-dark fw-bold fs-5" for="mmseScore"
+                  >MMSE Score (0-30)</label
+                >
                 <input
+                  id="mmseScore"
                   type="number"
                   v-model="newRecord.mmseScore"
                   class="form-control form-control-lg border-2"
                   placeholder="Enter score"
+                  min="0"
+                  max="30"
                 />
               </div>
 
-              <div v-if="errorMessageList.length > 0" class="alert alert-danger fs-5 fw-bold p-3">
+              <!-- 校验错误列表：role=alert 自动播报 -->
+              <div
+                v-if="errorMessageList.length > 0"
+                id="health-form-errors"
+                class="alert alert-danger fs-5 fw-bold p-3"
+                role="alert"
+              >
                 <ul class="mb-0">
                   <li v-for="(message, index) in errorMessageList" v-bind:key="index">
                     {{ message }}
@@ -69,10 +94,10 @@
       <div class="col-md-7">
         <div class="card shadow border-2 rounded-4 bg-light">
           <div class="card-body p-4">
-            <h3 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">
+            <h2 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">
               Tracking History
               <span class="badge bg-primary float-end fs-5">Total: {{ totalRecordCount }}</span>
-            </h3>
+            </h2>
 
             <!-- 导出 PDF 报告按钮 -->
             <button

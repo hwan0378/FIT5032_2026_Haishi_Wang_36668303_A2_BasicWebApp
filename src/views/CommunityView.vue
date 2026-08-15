@@ -1,19 +1,24 @@
 <template>
   <div class="container mt-4">
+    <h1 class="fw-bolder text-dark mb-4">Community</h1>
+
     <div class="row">
       <!-- 志愿者探访预约表单 -->
       <div class="col-md-6 mb-4">
         <div class="card shadow border-2 border-info rounded-4">
           <div class="card-body p-4">
-            <h3 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">Request a Visit</h3>
+            <h2 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">Request a Visit</h2>
             <p class="text-dark fs-5 fw-bold mb-4">
               Schedule a friendly check-in from our vetted volunteers.
             </p>
 
-            <form v-on:submit.prevent="submitVolunteerRequest">
+            <form v-on:submit.prevent="submitVolunteerRequest" aria-describedby="visit-form-errors">
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">Your Name</label>
+                <label class="form-label text-dark fw-bold fs-5" for="visitUserName"
+                  >Your Name</label
+                >
                 <input
+                  id="visitUserName"
                   type="text"
                   v-model="newRequest.userName"
                   class="form-control form-control-lg border-2"
@@ -22,8 +27,11 @@
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">Contact Number</label>
+                <label class="form-label text-dark fw-bold fs-5" for="visitContactNumber"
+                  >Contact Number</label
+                >
                 <input
+                  id="visitContactNumber"
                   type="tel"
                   v-model="newRequest.contactNumber"
                   class="form-control form-control-lg border-2"
@@ -32,8 +40,11 @@
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">Preferred Date</label>
+                <label class="form-label text-dark fw-bold fs-5" for="visitPreferredDate"
+                  >Preferred Date</label
+                >
                 <input
+                  id="visitPreferredDate"
                   type="text"
                   v-model="newRequest.preferredDate"
                   class="form-control form-control-lg border-2"
@@ -42,8 +53,11 @@
               </div>
 
               <div class="mb-4">
-                <label class="form-label text-dark fw-bold fs-5">Preferred Time</label>
+                <label class="form-label text-dark fw-bold fs-5" for="visitPreferredTime"
+                  >Preferred Time</label
+                >
                 <select
+                  id="visitPreferredTime"
                   v-model="newRequest.preferredTime"
                   class="form-select form-select-lg border-2"
                 >
@@ -53,7 +67,13 @@
                 </select>
               </div>
 
-              <div v-if="errorMessageList.length > 0" class="alert alert-danger fs-5 fw-bold p-3">
+              <!-- 校验错误列表：role=alert 自动播报 -->
+              <div
+                v-if="errorMessageList.length > 0"
+                id="visit-form-errors"
+                class="alert alert-danger fs-5 fw-bold p-3"
+                role="alert"
+              >
                 <ul class="mb-0">
                   <li v-for="(message, index) in errorMessageList" v-bind:key="index">
                     {{ message }}
@@ -61,16 +81,18 @@
                 </ul>
               </div>
 
+              <!-- 提交成功提示：role=status 温和播报 -->
               <div
                 v-if="isSubmissionSuccessful === true"
                 class="alert alert-success fs-5 fw-bold p-3"
+                role="status"
               >
                 Your request has been submitted successfully!
               </div>
 
               <button
                 type="submit"
-                class="btn btn-info text-white btn-lg w-100 mt-2 fw-bold shadow-sm"
+                class="btn btn-info text-dark btn-lg w-100 mt-2 fw-bold shadow-sm"
               >
                 Submit Request
               </button>
@@ -112,16 +134,16 @@
       <div class="col-md-6">
         <div class="card shadow border-2 rounded-4 mb-4 bg-light">
           <div class="card-body p-4">
-            <h3 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">
+            <h2 class="card-title fw-bolder text-dark mb-4 border-bottom pb-3">
               Local Support Groups
-            </h3>
+            </h2>
             <p class="text-dark fs-5 fw-bold mb-4">
               Connect with others and find emotional support.
             </p>
 
             <div class="card border border-2 border-primary mb-4 shadow-sm rounded-4">
               <div class="card-body p-4">
-                <h4 class="card-title text-primary fw-bolder">Memory Cafe Gathering</h4>
+                <h3 class="card-title text-primary fw-bolder">Memory Cafe Gathering</h3>
                 <p class="card-text text-dark fs-5 mb-2">
                   A safe and welcoming space for individuals with memory loss and caregivers.
                 </p>
@@ -134,7 +156,7 @@
 
             <div class="card border border-2 border-success mb-4 shadow-sm rounded-4">
               <div class="card-body p-4">
-                <h4 class="card-title text-success fw-bolder">Caregiver Support Circle</h4>
+                <h3 class="card-title text-success fw-bolder">Caregiver Support Circle</h3>
                 <p class="card-text text-dark fs-5 mb-2">
                   Share advice, resources, and emotional support.
                 </p>
@@ -147,7 +169,7 @@
 
             <div class="card border border-2 border-warning mb-4 shadow-sm rounded-4">
               <div class="card-body p-4">
-                <h4 class="card-title text-dark fw-bolder">Senior Wellness Walk</h4>
+                <h3 class="card-title text-dark fw-bolder">Senior Wellness Walk</h3>
                 <p class="card-text text-dark fs-5 mb-2">
                   Gentle outdoor exercise combined with friendly conversation.
                 </p>

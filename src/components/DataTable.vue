@@ -3,10 +3,10 @@
     <div class="card-body p-4">
       <!-- 标题行：标题 + 记录总数徽章 + 全局搜索 + 清空按钮 -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-        <h3 class="fw-bolder text-dark mb-0">
+        <h2 class="fw-bolder text-dark mb-0">
           {{ caption }}
           <span class="badge bg-primary fs-5">{{ totalCount }} records</span>
-        </h3>
+        </h2>
 
         <div class="d-flex flex-wrap gap-2">
           <input
@@ -125,7 +125,14 @@
               v-bind:key="page"
               v-bind:class="{ active: page === currentPage }"
             >
-              <button type="button" class="page-link" v-on:click="goToPage(page)">{{ page }}</button>
+              <button
+                type="button"
+                class="page-link"
+                v-on:click="goToPage(page)"
+                v-bind:aria-current="page === currentPage ? 'page' : null"
+              >
+                {{ page }}
+              </button>
             </li>
 
             <li class="page-item" v-bind:class="{ disabled: currentPage === totalPages }">

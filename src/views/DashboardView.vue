@@ -5,7 +5,7 @@
       v-if="currentUser === null || currentUser.role !== 'Coordinator'"
       class="alert alert-danger text-center p-5 mt-5 shadow border-2 rounded-4"
     >
-      <h2 class="fw-bolder">Access Denied</h2>
+      <h1 class="fw-bolder">Access Denied</h1>
       <p class="fs-4 fw-bold mt-3">
         You must be logged in as a <strong>Charity Coordinator</strong> to view this dashboard.
       </p>
@@ -17,7 +17,7 @@
     <!-- 后台界面 -->
     <div v-else class="row">
       <div class="col-12">
-        <h2 class="fw-bolder text-dark mb-4">Coordinator Dashboard</h2>
+        <h1 class="fw-bolder text-dark mb-4">Coordinator Dashboard</h1>
 
         <!-- 表 1：患者健康数据表（支持排序 / 全局搜索 / 按列搜索 / 分页） -->
         <DataTable

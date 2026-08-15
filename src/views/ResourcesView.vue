@@ -8,7 +8,7 @@
     <div class="row">
       <!-- 文章区 -->
       <div class="col-md-6 mb-4">
-        <h3 class="fw-bolder text-primary mb-4 border-bottom pb-2">Featured Articles</h3>
+        <h2 class="fw-bolder text-primary mb-4 border-bottom pb-2">Featured Articles</h2>
 
         <div
           v-for="(article, index) in articleList"
@@ -16,7 +16,7 @@
           class="card shadow border-2 border-secondary rounded-4 mb-4"
         >
           <div class="card-body p-4">
-            <h4 class="card-title fw-bolder text-dark mb-3">{{ article.title }}</h4>
+            <h3 class="card-title fw-bolder text-dark mb-3">{{ article.title }}</h3>
 
             <ul class="mt-3 text-dark fs-5 fw-bold" style="line-height: 1.8">
               <li
@@ -30,9 +30,13 @@
 
             <hr class="my-4 border-secondary border-2 opacity-25" />
 
-            <!-- 文章评分区 -->
+            <!-- 文章评分区：aria-live 让评分变化时屏幕阅读器自动播报 -->
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="badge bg-warning text-dark fs-5 p-2 shadow-sm">
+              <span
+                class="badge bg-warning text-dark fs-5 p-2 shadow-sm"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 Avg Rating: {{ calculateArticleAverage(article.ratings) }} ★
               </span>
               <span class="text-dark fw-bold fs-6">({{ article.ratings.length }} reviews)</span>
@@ -40,7 +44,11 @@
 
             <div class="input-group input-group-lg shadow-sm">
               <span class="input-group-text bg-dark text-white fw-bold">Rate:</span>
-              <select v-model="article.currentUserScore" class="form-select border-dark">
+              <select
+                v-model="article.currentUserScore"
+                class="form-select border-dark"
+                aria-label="Rate this article"
+              >
                 <option value="5">5 - Excellent</option>
                 <option value="4">4 - Good</option>
                 <option value="3">3 - Average</option>
@@ -60,7 +68,7 @@
 
       <!-- FAQ -->
       <div class="col-md-6">
-        <h3 class="fw-bolder text-primary mb-4 border-bottom pb-2">Caregiver FAQ</h3>
+        <h2 class="fw-bolder text-primary mb-4 border-bottom pb-2">Caregiver FAQ</h2>
 
         <div
           v-for="(faq, index) in faqList"
@@ -68,9 +76,9 @@
           class="card shadow-sm border-2 rounded-4 mb-4 bg-light"
         >
           <div class="card-body p-4">
-            <h4 class="card-title fw-bolder text-primary border-bottom border-secondary pb-3 mb-3">
+            <h3 class="card-title fw-bolder text-primary border-bottom border-secondary pb-3 mb-3">
               Q: {{ faq.question }}
-            </h4>
+            </h3>
             <p class="card-text text-dark fs-5 fw-bold" style="line-height: 1.6">
               <strong class="text-success fs-4 me-2">A:</strong> {{ faq.answer }}
             </p>
@@ -79,7 +87,7 @@
 
         <div class="card border-3 border-primary rounded-4 mb-3 mt-5 shadow">
           <div class="card-body text-center p-5">
-            <h3 class="text-dark fw-bolder mb-3">Still have questions?</h3>
+            <h2 class="text-dark fw-bolder mb-3">Still have questions?</h2>
             <p class="text-dark fs-5 fw-bold mb-4">
               Our community coordinators are here to help you.
             </p>

@@ -6,33 +6,51 @@
         <div class="col-md-6">
           <div class="card shadow border-0 rounded-4">
             <div class="card-body p-5">
-              <h3 v-if="isLoginMode === true" class="fw-bolder text-center text-primary mb-4">
+              <h1 v-if="isLoginMode === true" class="h3 fw-bolder text-center text-primary mb-4">
                 Login to ElderCare
-              </h3>
-              <h3 v-if="isLoginMode === false" class="fw-bolder text-center text-primary mb-4">
+              </h1>
+              <h1 v-if="isLoginMode === false" class="h3 fw-bolder text-center text-primary mb-4">
                 Register New Account
-              </h3>
+              </h1>
 
-              <div v-if="authErrorMessage !== ''" class="alert alert-danger fs-5 p-3 fw-bold">
+              <!-- 错误/成功提示：role=alert 让屏幕阅读器自动播报 -->
+              <div
+                v-if="authErrorMessage !== ''"
+                id="auth-alert"
+                class="alert alert-danger fs-5 p-3 fw-bold"
+                role="alert"
+              >
                 {{ authErrorMessage }}
               </div>
 
               <!-- 登录表单 -->
-              <form v-if="isLoginMode === true" v-on:submit.prevent="loginUser">
+              <form
+                v-if="isLoginMode === true"
+                v-on:submit.prevent="loginUser"
+                aria-describedby="auth-alert"
+              >
                 <div class="mb-3">
-                  <label class="form-label text-dark fw-bold fs-5">Username</label>
+                  <label class="form-label text-dark fw-bold fs-5" for="loginUsername"
+                    >Username</label
+                  >
                   <input
+                    id="loginUsername"
                     type="text"
                     v-model="loginForm.username"
                     class="form-control form-control-lg border-2"
+                    autocomplete="username"
                   />
                 </div>
                 <div class="mb-4">
-                  <label class="form-label text-dark fw-bold fs-5">Password</label>
+                  <label class="form-label text-dark fw-bold fs-5" for="loginPassword"
+                    >Password</label
+                  >
                   <input
+                    id="loginPassword"
                     type="password"
                     v-model="loginForm.password"
                     class="form-control form-control-lg border-2"
+                    autocomplete="current-password"
                   />
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg w-100 mb-3 fw-bold">
@@ -47,40 +65,62 @@
               </form>
 
               <!-- 注册表单 -->
-              <form v-if="isLoginMode === false" v-on:submit.prevent="registerUser">
+              <form
+                v-if="isLoginMode === false"
+                v-on:submit.prevent="registerUser"
+                aria-describedby="auth-alert"
+              >
                 <div class="mb-3">
-                  <label class="form-label text-dark fw-bold fs-5">Choose Username</label>
+                  <label class="form-label text-dark fw-bold fs-5" for="regUsername"
+                    >Choose Username</label
+                  >
                   <input
+                    id="regUsername"
                     type="text"
                     v-model="registerForm.username"
                     class="form-control form-control-lg border-2"
+                    autocomplete="username"
                   />
                 </div>
                 <div class="mb-3">
-                  <label class="form-label text-dark fw-bold fs-5">Choose Password</label>
+                  <label class="form-label text-dark fw-bold fs-5" for="regPassword"
+                    >Choose Password</label
+                  >
                   <input
+                    id="regPassword"
                     type="password"
                     v-model="registerForm.password"
                     class="form-control form-control-lg border-2"
+                    autocomplete="new-password"
                   />
-                  <div class="mt-2 text-secondary fw-bold fs-6">
+                  <div class="mt-2 text-secondary fw-bold fs-6" id="passwordHint">
                     Must be at least 8 characters, include an uppercase letter, a lowercase letter,
                     and a number.
                   </div>
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label text-dark fw-bold fs-5">Confirm Password</label>
+                  <label class="form-label text-dark fw-bold fs-5" for="regConfirmPassword"
+                    >Confirm Password</label
+                  >
                   <input
+                    id="regConfirmPassword"
                     type="password"
                     v-model="registerForm.confirmPassword"
                     class="form-control form-control-lg border-2"
+                    autocomplete="new-password"
                   />
                 </div>
 
                 <div class="mb-4">
-                  <label class="form-label text-dark fw-bold fs-5">Select Your Role</label>
-                  <select v-model="registerForm.role" class="form-select form-select-lg border-2">
+                  <label class="form-label text-dark fw-bold fs-5" for="regRole"
+                    >Select Your Role</label
+                  >
+                  <select
+                    id="regRole"
+                    v-model="registerForm.role"
+                    class="form-select form-select-lg border-2"
+                  >
                     <option value="">Select a role...</option>
                     <option value="Senior">Senior / Caregiver</option>
                     <option value="Coordinator">Charity Coordinator</option>
@@ -175,7 +215,7 @@
                   Connect with vetted local support groups or seamlessly request a friendly
                   volunteer check-in.
                 </p>
-                <router-link to="/community" class="btn btn-info text-white btn-lg mt-auto fw-bold"
+                <router-link to="/community" class="btn btn-info text-dark btn-lg mt-auto fw-bold"
                   >Get Connected</router-link
                 >
               </div>
