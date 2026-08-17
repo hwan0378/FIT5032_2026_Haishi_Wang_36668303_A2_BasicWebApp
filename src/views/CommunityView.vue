@@ -150,7 +150,9 @@
                 <p class="text-dark fw-bold fs-5 mb-3 bg-light p-2 rounded">
                   Every Tuesday, 10:00 AM
                 </p>
-                <button class="btn btn-primary btn-lg fw-bold">Get Directions</button>
+                <router-link to="/map" class="btn btn-primary btn-lg fw-bold"
+                  >Get Directions</router-link
+                >
               </div>
             </div>
 
