@@ -3,8 +3,8 @@
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-// 导出 CSV：接收表格行数据、列配置与文件名，触发浏览器下载
-export function exportToCSV(rows, columns, filename) {
+// 把表格行数据拼成 CSV 文本（供下载导出与邮件附件复用）
+export function buildCSVString(rows, columns) {
   // 第一行是表头
   const header = columns.map((col) => col.label).join(',')
 
@@ -24,7 +24,12 @@ export function exportToCSV(rows, columns, filename) {
       .join(',')
   })
 
-  const csvContent = [header].concat(bodyLines).join('\n')
+  return [header].concat(bodyLines).join('\n')
+}
+
+// 导出 CSV：接收表格行数据、列配置与文件名，触发浏览器下载
+export function exportToCSV(rows, columns, filename) {
+  const csvContent = buildCSVString(rows, columns)
 
   // 加上 BOM（﻿），避免 Excel 打开中文内容乱码
   const blob = new Blob(['﻿' + csvContent], { type: 'text/csv;charset=utf-8;' })

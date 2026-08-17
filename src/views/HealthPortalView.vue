@@ -140,11 +140,71 @@
         </div>
       </div>
     </div>
+
+    <!-- 发送健康报告邮件的卡片（附件 = 导出的 CSV） -->
+    <div class="card shadow border-2 border-info rounded-4 mt-4">
+      <div class="card-body p-4">
+        <h2 class="card-title fw-bolder text-dark mb-2 border-bottom pb-3">
+          Email My Health Report
+        </h2>
+        <p class="text-dark fs-5 fw-bold mb-4">
+          Send your latest tracking records to a recipient as a CSV attachment.
+        </p>
+
+        <form v-on:submit.prevent="sendHealthReportEmail" aria-describedby="email-status">
+          <div class="row g-3">
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-dark fw-bold fs-5" for="emailRecipient"
+                >Recipient Email</label
+              >
+              <input
+                id="emailRecipient"
+                type="email"
+                v-model="emailForm.to"
+                class="form-control form-control-lg border-2"
+                autocomplete="email"
+              />
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-dark fw-bold fs-5" for="emailMessage"
+                >Message (optional)</label
+              >
+              <textarea
+                id="emailMessage"
+                v-model="emailForm.note"
+                class="form-control form-control-lg border-2"
+                rows="2"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- 发送状态提示：成功用 status 温和播报，失败用 alert 强调 -->
+          <div
+            v-if="emailStatusMessage !== ''"
+            id="email-status"
+            v-bind:class="emailStatusIsError ? 'alert alert-danger' : 'alert alert-success'"
+            class="fs-5 fw-bold p-3"
+            v-bind:role="emailStatusIsError ? 'alert' : 'status'"
+          >
+            {{ emailStatusMessage }}
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-info text-dark btn-lg fw-bold shadow-sm"
+            v-bind:disabled="isSendingEmail"
+          >
+            {{ isSendingEmail ? 'Sending...' : 'Send Report Email' }}
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { exportToPDF } from '../utils/export'
+import { exportToPDF, buildCSVString } from '../utils/export'
 
 export default {
   name: 'HealthPortalView',
@@ -158,6 +218,14 @@ export default {
       },
       recordList: [],
       errorMessageList: [],
+      // 邮件发送表单与发送状态
+      emailForm: {
+        to: '',
+        note: '',
+      },
+      emailStatusMessage: '',
+      emailStatusIsError: false,
+      isSendingEmail: false,
       // PDF 报告里的列配置
       reportColumns: [
         { key: 'patientRID', label: 'Patient ID (RID)' },
@@ -178,6 +246,15 @@ export default {
       this.recordList = JSON.parse(savedData)
     } else {
       this.recordList = []
+    }
+
+    // 默认把收件人填成当前登录用户的邮箱，方便直接发送给自己
+    let savedUser = localStorage.getItem('current_user')
+    if (savedUser !== null) {
+      const user = JSON.parse(savedUser)
+      if (user.email !== undefined) {
+        this.emailForm.to = user.email
+      }
     }
   },
   methods: {
@@ -235,6 +312,83 @@ export default {
         return
       }
       exportToPDF(this.recordList, this.reportColumns, 'Health_Assessment_Report.pdf', 'My Health Assessment Report')
+    },
+
+    // 校验邮箱格式是否合法
+    isValidEmail(email) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      return emailPattern.test(email)
+    },
+
+    // 把 UTF-8 文本转成 base64（btoa 只支持拉丁字符，需要先编码成字节）
+    utf8ToBase64(text) {
+      const bytes = new TextEncoder().encode(text)
+      let binary = ''
+      for (let i = 0; i < bytes.length; i++) {
+        binary = binary + String.fromCharCode(bytes[i])
+      }
+      return btoa(binary)
+    },
+
+    // 把健康记录作为 CSV 附件发送到指定邮箱
+    async sendHealthReportEmail() {
+      // 收件人邮箱校验
+      if (this.isValidEmail(this.emailForm.to) === false) {
+        this.emailStatusIsError = true
+        this.emailStatusMessage = 'Please enter a valid recipient email address.'
+        return
+      }
+
+      // 至少需要一条记录，否则没有附件内容
+      if (this.recordList.length === 0) {
+        this.emailStatusIsError = true
+        this.emailStatusMessage = 'No records to send. Please add a record first.'
+        return
+      }
+
+      // 生成 CSV 附件：加上 BOM 避免 Excel 乱码，再转成 base64
+      const csvText = '\uFEFF' + buildCSVString(this.recordList, this.reportColumns)
+      const csvBase64 = this.utf8ToBase64(csvText)
+
+      this.isSendingEmail = true
+      this.emailStatusMessage = ''
+
+      try {
+        const response = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: this.emailForm.to,
+            subject: 'Your ElderCare Health Report',
+            text:
+              this.emailForm.note !== ''
+                ? this.emailForm.note
+                : 'Dear ElderCare user, please find attached your latest health tracking records.',
+            attachment: {
+              filename: 'Health_Report.csv',
+              content: csvBase64,
+            },
+          }),
+        })
+
+        const result = await response.json()
+
+        if (response.ok === false) {
+          const reason = result.error !== undefined ? result.error : 'Unknown error.'
+          this.emailStatusIsError = true
+          this.emailStatusMessage = 'Failed to send email: ' + reason
+        } else {
+          this.emailStatusIsError = false
+          this.emailStatusMessage = 'Email sent successfully! Please check the inbox.'
+        }
+      } catch {
+        this.emailStatusIsError = true
+        this.emailStatusMessage = 'Network error. Please check your connection and try again.'
+      } finally {
+        this.isSendingEmail = false
+      }
     },
   },
 }
