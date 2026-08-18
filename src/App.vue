@@ -1,5 +1,8 @@
 <template>
   <div id="app">
+    <!-- 离线 / 恢复连接的全局提示横幅 -->
+    <OfflineBanner />
+
     <!-- 无障碍：键盘用户可直接跳到主体内容 -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -91,8 +94,13 @@
 </template>
 
 <script>
+import OfflineBanner from './components/OfflineBanner.vue'
+
 export default {
   name: 'App',
+  components: {
+    OfflineBanner,
+  },
   methods: {
     // 判断当前路由，用于给激活的导航链接标记 aria-current
     isCurrentRoute(routeName) {

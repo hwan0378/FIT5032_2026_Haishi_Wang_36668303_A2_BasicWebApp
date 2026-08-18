@@ -172,6 +172,8 @@ import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 // interaction 插件负责"点击日期选择"等交互（selectable 依赖它）
 import interactionPlugin from '@fullcalendar/interaction'
+// 离线队列工具：离线预约时入队，恢复在线后提示同步
+import { isOnline, enqueueAction } from '../utils/offline'
 
 // 本地存储预约数据的键名
 const BOOKINGS_STORAGE_KEY = 'volunteer_bookings'
@@ -297,6 +299,15 @@ export default {
         contactNumber: contact,
       })
       localStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(this.bookings))
+
+      // 离线时把这次预约加入待同步队列，恢复在线后提示
+      if (isOnline() === false) {
+        enqueueAction('create_booking', {
+          date: this.newBooking.date,
+          timeSlot: this.newBooking.timeSlot,
+          userName: name,
+        })
+      }
 
       this.successMessage = 'Booking confirmed for ' + this.newBooking.date + '!'
       this.showBookingForm = false

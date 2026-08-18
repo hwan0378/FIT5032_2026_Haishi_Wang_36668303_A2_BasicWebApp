@@ -205,6 +205,9 @@
 </template>
 
 <script>
+// 引入离线队列工具：离线提交时把操作入队，恢复在线后由横幅统一提示
+import { isOnline, enqueueAction } from '../utils/offline'
+
 export default {
   name: 'CommunityView',
   data() {
@@ -264,6 +267,11 @@ export default {
 
         this.savedRequestList.push(requestToSave)
         localStorage.setItem('volunteer_requests', JSON.stringify(this.savedRequestList))
+
+        // 离线时把这次操作加入待同步队列，恢复在线后提示
+        if (isOnline() === false) {
+          enqueueAction('volunteer_request', requestToSave)
+        }
 
         this.isSubmissionSuccessful = true
 

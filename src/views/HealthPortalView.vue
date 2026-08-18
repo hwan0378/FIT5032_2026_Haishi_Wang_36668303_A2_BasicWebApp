@@ -217,6 +217,7 @@
 <script>
 import { exportToPDF, buildCSVString } from '../utils/export'
 import { VChart } from '../utils/echarts'
+import { isOnline, enqueueAction } from '../utils/offline'
 
 export default {
   name: 'HealthPortalView',
@@ -341,6 +342,11 @@ export default {
 
         this.recordList.push(recordToSave)
         localStorage.setItem('my_health_records', JSON.stringify(this.recordList))
+
+        // 离线时把这次操作加入待同步队列，恢复在线后由横幅提示
+        if (isOnline() === false) {
+          enqueueAction('save_health_record', recordToSave)
+        }
 
         this.newRecord.patientRID = ''
         this.newRecord.visitCode = ''
