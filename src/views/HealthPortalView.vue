@@ -141,6 +141,17 @@
       </div>
     </div>
 
+    <!-- MMSE 趋势折线图 -->
+    <div class="card shadow border-2 border-warning rounded-4 mt-4">
+      <div class="card-body p-4">
+        <h2 class="card-title fw-bolder text-dark mb-3 border-bottom pb-3">MMSE Score Trend</h2>
+        <div v-if="recordList.length === 0" class="text-dark fs-5 fw-bold text-center py-4">
+          No data yet. Add a tracking record to see the trend.
+        </div>
+        <VChart v-else v-bind:option="mmseChartOption" autoresize class="chart-box" />
+      </div>
+    </div>
+
     <!-- 发送健康报告邮件的卡片（附件 = 导出的 CSV） -->
     <div class="card shadow border-2 border-info rounded-4 mt-4">
       <div class="card-body p-4">
@@ -205,9 +216,13 @@
 
 <script>
 import { exportToPDF, buildCSVString } from '../utils/export'
+import { VChart } from '../utils/echarts'
 
 export default {
   name: 'HealthPortalView',
+  components: {
+    VChart,
+  },
   data() {
     return {
       newRecord: {
@@ -238,6 +253,39 @@ export default {
   computed: {
     totalRecordCount() {
       return this.recordList.length
+    },
+    // MMSE 趋势折线图的数据配置：依赖 recordList，记录变化时图表自动更新
+    mmseChartOption() {
+      // 每个点用"阶段 + 序号"作标签，方便区分同阶段录入的多条记录
+      const labels = this.recordList.map((record, index) => {
+        return record.visitCode + ' #' + (index + 1)
+      })
+      const scores = this.recordList.map((record) => Number(record.mmseScore))
+
+      return {
+        title: {
+          text: 'MMSE Score by Visit',
+          left: 'center',
+          textStyle: { fontSize: 16 },
+        },
+        tooltip: { trigger: 'axis' },
+        grid: { left: 50, right: 30, top: 60, bottom: 40 },
+        xAxis: { type: 'category', data: labels },
+        yAxis: { type: 'value', min: 0, max: 30, name: 'Score' },
+        series: [
+          {
+            type: 'line',
+            data: scores,
+            smooth: true,
+            // 与页面判定规则一致的警戒线：低于 24 分表示需要关注
+            markLine: {
+              data: [{ yAxis: 24 }],
+              lineStyle: { color: '#dc3545' },
+              label: { formatter: 'Alert < 24' },
+            },
+          },
+        ],
+      }
     },
   },
   mounted() {
@@ -394,4 +442,10 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+/* 图表容器需要明确高度才能正常显示 */
+.chart-box {
+  height: 340px;
+  width: 100%;
+}
+</style>

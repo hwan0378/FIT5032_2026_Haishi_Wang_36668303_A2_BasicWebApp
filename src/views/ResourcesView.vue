@@ -98,12 +98,25 @@
         </div>
       </div>
     </div>
+
+    <!-- 文章评分分布柱状图 -->
+    <div class="card shadow border-2 border-warning rounded-4 mt-4">
+      <div class="card-body p-4">
+        <h2 class="card-title fw-bolder text-dark mb-3 border-bottom pb-3">Rating Distribution</h2>
+        <VChart v-bind:option="ratingChartOption" autoresize class="chart-box" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import { VChart } from '../utils/echarts'
+
 export default {
   name: 'ResourcesView',
+  components: {
+    VChart,
+  },
   data() {
     return {
       articleList: [
@@ -139,6 +152,46 @@ export default {
         },
       ],
     }
+  },
+  computed: {
+    // 评分分布柱状图的数据配置：依赖 articleList，有人打分后图表自动更新
+    ratingChartOption() {
+      // 横轴是 1~5 星
+      const categories = ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars']
+      const scoreValues = [1, 2, 3, 4, 5]
+
+      // 每篇文章一簇柱，统计每个分数出现的次数
+      const series = this.articleList.map((article, index) => {
+        const counts = scoreValues.map((value) => {
+          let count = 0
+          for (let i = 0; i < article.ratings.length; i++) {
+            if (article.ratings[i] === value) {
+              count = count + 1
+            }
+          }
+          return count
+        })
+        return {
+          name: 'Article ' + (index + 1),
+          type: 'bar',
+          data: counts,
+        }
+      })
+
+      return {
+        title: {
+          text: 'How readers rated each article',
+          left: 'center',
+          textStyle: { fontSize: 16 },
+        },
+        tooltip: { trigger: 'axis' },
+        legend: { bottom: 0 },
+        grid: { left: 50, right: 30, top: 60, bottom: 60 },
+        xAxis: { type: 'category', data: categories },
+        yAxis: { type: 'value', name: 'Ratings', minInterval: 1 },
+        series,
+      }
+    },
   },
   mounted() {
     // 页面加载时，读取整个文章列表的数据（包含用户最新打的分数）
@@ -181,4 +234,10 @@ export default {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+/* 图表容器需要明确高度才能正常显示 */
+.chart-box {
+  height: 340px;
+  width: 100%;
+}
+</style>

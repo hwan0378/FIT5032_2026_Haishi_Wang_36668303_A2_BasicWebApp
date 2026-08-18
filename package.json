@@ -18,11 +18,13 @@
     "@fullcalendar/interaction": "^6.1.21",
     "@fullcalendar/vue3": "^6.1.21",
     "bootstrap": "^5.3.8",
+    "echarts": "^6.1.0",
     "firebase": "^12.17.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "leaflet": "^1.9.4",
     "vue": "^3.5.38",
+    "vue-echarts": "^8.1.0",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
