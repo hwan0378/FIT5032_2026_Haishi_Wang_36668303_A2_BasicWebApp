@@ -2,6 +2,22 @@
   <div class="container mt-4">
     <h1 class="fw-bolder text-dark mb-4">Community</h1>
 
+    <!-- 预约日历入口 -->
+    <div class="card shadow border-2 border-success rounded-4 mb-4">
+      <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <h2 class="card-title fw-bolder text-dark mb-1">Volunteer Visit Calendar</h2>
+          <p class="text-dark fs-5 fw-bold mb-0">
+            Book a volunteer visit on an interactive calendar — duplicates are rejected
+            automatically.
+          </p>
+        </div>
+        <router-link to="/booking" class="btn btn-success btn-lg fw-bold shadow-sm"
+          >Book a Visit</router-link
+        >
+      </div>
+    </div>
+
     <div class="row">
       <!-- 志愿者探访预约表单 -->
       <div class="col-md-6 mb-4">
