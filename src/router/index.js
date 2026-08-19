@@ -53,6 +53,12 @@ const router = createRouter({
       component: () => import('../views/DashboardView.vue'),
       meta: { requiresAuth: true, requiresRole: 'Coordinator' }, // 还需要协调员角色
     },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../views/AdminDashboardView.vue'),
+      meta: { requiresAuth: true, requiresRole: 'Admin' }, // 仅管理员可见
+    },
   ],
 })
 

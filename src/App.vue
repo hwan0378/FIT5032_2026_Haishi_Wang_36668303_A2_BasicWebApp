@@ -81,6 +81,17 @@
                 Dashboard
               </router-link>
             </li>
+
+            <!-- 管理员面板：仅 Admin 角色可见 -->
+            <li v-if="isAdmin" class="nav-item">
+              <router-link
+                class="nav-link text-danger fw-bolder fs-5"
+                to="/admin"
+                v-bind:aria-current="isCurrentRoute('admin')"
+              >
+                Admin
+              </router-link>
+            </li>
           </ul>
         </div>
       </div>
@@ -95,13 +106,43 @@
 
 <script>
 import OfflineBanner from './components/OfflineBanner.vue'
+import { getCurrentUser } from './services/auth'
 
 export default {
   name: 'App',
   components: {
     OfflineBanner,
   },
+  data() {
+    return {
+      // 当前登录用户的角色（登录/登出后随路由变化刷新）
+      currentRole: '',
+    }
+  },
+  created() {
+    // 页面启动时读取一次当前用户角色
+    this.refreshRole()
+  },
+  watch: {
+    // 登录/登出都会触发路由跳转，借此刷新角色状态
+    '$route.path': 'refreshRole',
+  },
+  computed: {
+    // 是否管理员（前端只控制导航链接显示，真正的拦截由路由守卫完成）
+    isAdmin() {
+      return this.currentRole === 'Admin'
+    },
+  },
   methods: {
+    // 从本地缓存的用户资料里读取角色
+    refreshRole() {
+      const user = getCurrentUser()
+      if (user === null || user.role === undefined) {
+        this.currentRole = ''
+      } else {
+        this.currentRole = user.role
+      }
+    },
     // 判断当前路由，用于给激活的导航链接标记 aria-current
     isCurrentRoute(routeName) {
       if (this.$route.name === routeName) {
