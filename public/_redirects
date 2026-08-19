@@ -1,0 +1,3 @@
+# Cloudflare Pages SPA 回退：所有未匹配路径一律返回 index.html（历史模式路由防 404）
+# 注意：/api/* 由 Pages Functions 处理，优先级高于此规则，不受影响
+/* /index.html 200

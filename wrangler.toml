@@ -1,0 +1,7 @@
+# Cloudflare Pages 配置：Pages Functions 项目必需的 wrangler.toml
+# 让 wrangler deploy 正确识别此项目为 Pages 站点，而不是把 vite.config.js 当作配置解析
+name = "eldercare-charity"
+compatibility_date = "2026-08-19"
+
+# 构建产物目录（Cloudflare 构建后生成 dist，这里指向它）
+pages_build_output_dir = "dist"
