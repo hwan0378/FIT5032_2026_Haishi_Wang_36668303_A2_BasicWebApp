@@ -164,7 +164,6 @@ body {
   color: #0d6efd !important;
 }
 
-/* 无障碍：跳过链接默认移出屏幕，聚焦时回到屏幕左上角 */
 .skip-link {
   position: absolute;
   left: -9999px;
@@ -180,7 +179,6 @@ body {
   left: 0;
 }
 
-/* 无障碍：键盘聚焦时有清晰可见的焦点框 */
 :focus-visible {
   outline: 3px solid #0d6efd;
   outline-offset: 2px;

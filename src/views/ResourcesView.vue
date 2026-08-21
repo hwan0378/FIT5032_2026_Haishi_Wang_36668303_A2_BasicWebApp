@@ -111,6 +111,9 @@
 
 <script>
 import { VChart } from '../utils/echarts'
+// Firestore：评分数据写入并读取 Firestore，满足图表数据源来自 Firestore（F.1 Interactive Charts）
+import { collection, getDocs, addDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 
 export default {
   name: 'ResourcesView',
@@ -199,6 +202,9 @@ export default {
     if (savedArticles !== null) {
       this.articleList = JSON.parse(savedArticles)
     }
+
+    // 评分图表数据源来自 Firestore：在线时优先用 Firestore 中的评分
+    this.loadRatingsFromFirestore()
   },
   methods: {
     // 传入当前文章的评分数组，计算均值
@@ -216,8 +222,8 @@ export default {
       return average.toFixed(1)
     },
 
-    // 提交单篇文章的新分数
-    submitArticleRating(articleIndex) {
+    // 提交单篇文章的新分数（async：需要等待 Firestore 写入）
+    async submitArticleRating(articleIndex) {
       // 通过索引找到用户正在打分的具体文章
       let article = this.articleList[articleIndex]
 
@@ -225,10 +231,52 @@ export default {
       let newScore = parseInt(article.currentUserScore)
       article.ratings.push(newScore)
 
-      // 将更新后的整个 articleList 数组存入 LocalStorage
+      // 将更新后的整个 articleList 数组存入 LocalStorage（离线也能保存）
       localStorage.setItem('article_ratings_data', JSON.stringify(this.articleList))
 
+      // 同步写入 Firestore，供评分分布图读取；失败（如离线）时忽略
+      try {
+        await addDoc(collection(db, 'ratings'), {
+          articleIndex: articleIndex,
+          score: newScore,
+          createdAt: new Date().toISOString(),
+        })
+      } catch {
+        // Firestore 写入失败不影响评分功能
+      }
+
       alert('Thank you for rating this article!')
+    },
+
+    // 从 Firestore 读取所有评分并重建每篇文章的评分数组；失败则保持本地评分
+    async loadRatingsFromFirestore() {
+      try {
+        const snapshot = await getDocs(collection(db, 'ratings'))
+        if (snapshot.size === 0) {
+          return
+        }
+
+        // 按文章索引把评分分组
+        const ratingsByArticle = {}
+        for (let i = 0; i < snapshot.docs.length; i++) {
+          const data = snapshot.docs[i].data()
+          const articleIndex = data.articleIndex
+          if (ratingsByArticle[articleIndex] === undefined) {
+            ratingsByArticle[articleIndex] = []
+          }
+          ratingsByArticle[articleIndex].push(Number(data.score))
+        }
+
+        // 用 Firestore 中的评分替换对应文章的评分数组
+        for (let i = 0; i < this.articleList.length; i++) {
+          if (ratingsByArticle[i] !== undefined) {
+            this.articleList[i].ratings = ratingsByArticle[i]
+          }
+        }
+        localStorage.setItem('article_ratings_data', JSON.stringify(this.articleList))
+      } catch {
+        // 离线或网络异常：保留本地评分，图表仍可显示
+      }
     },
   },
 }

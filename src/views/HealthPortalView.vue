@@ -217,6 +217,9 @@
 <script>
 import { exportToPDF, buildCSVString } from '../utils/export'
 import { VChart } from '../utils/echarts'
+// Firestore：交互式图表的数据源来自 Firestore（对应 BR F.1 Interactive Charts）
+import { collection, getDocs, addDoc, orderBy, query } from 'firebase/firestore'
+import { db } from '../firebase'
 import { isOnline, enqueueAction } from '../utils/offline'
 
 export default {
@@ -297,6 +300,9 @@ export default {
       this.recordList = []
     }
 
+    // 图表数据源来自 Firestore：在线时拉取 Firestore 中的健康记录（含他人录入）
+    this.loadRecordsFromFirestore()
+
     // 默认把收件人填成当前登录用户的邮箱，方便直接发送给自己
     let savedUser = localStorage.getItem('current_user')
     if (savedUser !== null) {
@@ -307,7 +313,8 @@ export default {
     }
   },
   methods: {
-    saveNewRecord() {
+    // 保存新记录（async：需要等待 Firestore 写入完成）
+    async saveNewRecord() {
       this.errorMessageList = []
 
       // 表单校验：检查必填项与分数边界范围限制
@@ -343,6 +350,19 @@ export default {
         this.recordList.push(recordToSave)
         localStorage.setItem('my_health_records', JSON.stringify(this.recordList))
 
+        // 同步写入 Firestore，保证图表数据源来自 Firestore；失败（如离线）时忽略
+        try {
+          await addDoc(collection(db, 'health_records'), {
+            patientRID: safeRID,
+            visitCode: this.newRecord.visitCode,
+            visitCode2: safeViscode2,
+            mmseScore: this.newRecord.mmseScore,
+            createdAt: new Date().toISOString(),
+          })
+        } catch {
+          // Firestore 写入失败时不影响本地保存与离线使用
+        }
+
         // 离线时把这次操作加入待同步队列，恢复在线后由横幅提示
         if (isOnline() === false) {
           enqueueAction('save_health_record', recordToSave)
@@ -352,6 +372,31 @@ export default {
         this.newRecord.visitCode = ''
         this.newRecord.visitCode2 = ''
         this.newRecord.mmseScore = ''
+      }
+    },
+
+    // 从 Firestore 读取全部健康记录作为图表数据；失败则保持本地缓存
+    async loadRecordsFromFirestore() {
+      try {
+        const snapshot = await getDocs(
+          query(collection(db, 'health_records'), orderBy('createdAt', 'asc')),
+        )
+        const records = snapshot.docs.map((document) => {
+          const data = document.data()
+          return {
+            patientRID: data.patientRID,
+            visitCode: data.visitCode,
+            visitCode2: data.visitCode2,
+            mmseScore: data.mmseScore,
+          }
+        })
+        // Firestore 有数据时以其为准，并同步回本地缓存，保证离线也可查看
+        if (records.length > 0) {
+          this.recordList = records
+          localStorage.setItem('my_health_records', JSON.stringify(records))
+        }
+      } catch {
+        // 离线或网络异常时保留本地缓存数据，图表仍然可用
       }
     },
     deleteRecord(indexNumber) {
@@ -365,7 +410,12 @@ export default {
         alert('No records to export. Please add a record first.')
         return
       }
-      exportToPDF(this.recordList, this.reportColumns, 'Health_Assessment_Report.pdf', 'My Health Assessment Report')
+      exportToPDF(
+        this.recordList,
+        this.reportColumns,
+        'Health_Assessment_Report.pdf',
+        'My Health Assessment Report',
+      )
     },
 
     // 校验邮箱格式是否合法
@@ -449,7 +499,6 @@ export default {
 </script>
 
 <style scoped>
-/* 图表容器需要明确高度才能正常显示 */
 .chart-box {
   height: 340px;
   width: 100%;
